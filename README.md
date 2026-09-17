@@ -1,5 +1,7 @@
 # Laravel Object Storage (Yandex Cloud)
 
+![Превью приложения](resources/img/preview.png)
+
 Небольшое Laravel-приложение для загрузки файлов через drag-and-drop форму с сохранением в **Yandex Object Storage** (S3-совместимое хранилище) и постраничным просмотром уже загруженных файлов.
 
 ## Возможности
