@@ -37,6 +37,7 @@
     </section>
 
     <footer class="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:px-8">
+
         <button type="button" id="cancel"
                 class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">
             Cancel

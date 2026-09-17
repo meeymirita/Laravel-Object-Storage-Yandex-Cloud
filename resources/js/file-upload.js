@@ -1,4 +1,4 @@
-// Drag-and-drop file upload widget (resources/views/components/file-upload.blade.php).
+
 export function initFileUpload() {
     const form = document.getElementById('file-upload');
     if (!form) return;
@@ -97,9 +97,24 @@ export function initFileUpload() {
     });
 
     document.getElementById('submit').onclick = () => {
-        alert(`Submitted files:\n${Object.values(files).map((f) => f.name).join('\n')}`);
-        console.log(files);
+        loadFiles(files);
     };
+
+    function loadFiles(files) {
+        const formData = new FormData();
+        Object.values(files).forEach(file => formData.append('files[]', file));
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        fetch('/files/upload', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData,
+        }).then(response => {
+            if (!response.ok) throw new Error('Upload failed: ' + response.status);
+            document.dispatchEvent(new CustomEvent('files-uploaded'));
+        }).catch(error => console.error(error));
+    }
 
     document.getElementById('cancel').onclick = resetGallery;
 }

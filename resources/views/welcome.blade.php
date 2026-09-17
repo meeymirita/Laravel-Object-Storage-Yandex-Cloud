@@ -6,6 +6,8 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     @fonts
 
     <!-- Styles / Scripts -->
@@ -13,9 +15,14 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-300 p-4 sm:p-8">
-    <main class="mx-auto h-[calc(100vh-2rem)] max-w-3xl sm:h-[calc(100vh-4rem)]">
-        <x-file-upload/>
+<body class="h-screen overflow-hidden bg-gradient-to-br from-slate-100 to-slate-300 p-4 sm:p-8">
+    <main class="mx-auto flex h-full max-w-[1920px] flex-col gap-6 lg:flex-row">
+        <div class="min-h-0 flex-1 lg:w-[60%] lg:flex-none">
+            <x-file-list/>
+        </div>
+        <div class="min-h-0 flex-1 lg:w-[40%] lg:flex-none">
+            <x-file-upload/>
+        </div>
     </main>
 </body>
 </html>

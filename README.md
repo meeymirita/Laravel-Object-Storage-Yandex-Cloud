@@ -1,58 +1,71 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Object Storage (Yandex Cloud)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Небольшое Laravel-приложение для загрузки файлов через drag-and-drop форму с сохранением в **Yandex Object Storage** (S3-совместимое хранилище) и постраничным просмотром уже загруженных файлов.
 
-## About Laravel
+## Возможности
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Drag-and-drop / выбор файлов через кнопку, превью перед отправкой (`resources/js/file-upload.js`, `resources/views/components/file-upload.blade.php`).
+- Загрузка файлов (`jpg`, `png`, `webp`, `gif`, до 10 МБ) в бакет Yandex Object Storage через S3-адаптер Laravel.
+- Список уже загруженных файлов с постраничной навигацией (`resources/js/get-files.js`, `resources/views/components/file-list.blade.php`).
+- Верстка на Tailwind CSS 4: галерея файлов слева (60% ширины), форма загрузки справа (40%).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Стек
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Laravel 13, PHP 8.3
+- `league/flysystem-aws-s3-v3` — S3-совместимый драйвер для `Storage::disk('s3')`
+- Vite + Tailwind CSS 4
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Установка
 
 ```bash
-composer require laravel/boost --dev
+composer install
+npm install
 
-php artisan boost:install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Настройка Yandex Object Storage
 
-## Contributing
+В `.env` заполните блок `AWS_*` данными вашего сервисного аккаунта и бакета:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```env
+AWS_ACCESS_KEY_ID=<статический ключ сервисного аккаунта>
+AWS_SECRET_ACCESS_KEY=<секрет сервисного аккаунта>
+AWS_DEFAULT_REGION=ru-central1
+AWS_BUCKET=<имя бакета>
+AWS_ENDPOINT=https://storage.yandexcloud.net
+AWS_USE_PATH_STYLE_ENDPOINT=false
+```
 
-## Code of Conduct
+Важно:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Права на запись/чтение бакета нужно выдать **сервисному аккаунту** (роль `editor` на бакете), а не личному аккаунту в консоли — это разные сущности.
+- Диск `s3` настроен с `'visibility' => 'public'` (`config/filesystems.php`), поэтому загруженные файлы сразу доступны по прямой ссылке вида `https://<bucket>.storage.yandexcloud.net/<path>`.
+- Убедитесь, что переменные `AWS_*` не переопределены на уровне окружения процесса (например, старым запуском `composer dev` из IDE) — переменные окружения ОС имеют приоритет над `.env`.
 
-## Security Vulnerabilities
+## Запуск
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+composer run dev
+```
 
-## License
+Поднимет одновременно: `php artisan serve`, очередь, лог-вьюер (`pail`) и Vite dev-сервер. Приложение будет доступно на `http://localhost:8000`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Для продакшен-сборки фронтенда:
+
+```bash
+npm run build
+```
+
+## Структура (что относится к загрузке файлов)
+
+```
+app/Http/Controllers/ImageController.php   — маршруты upload/index
+app/Http/Requests/ImageRequest.php         — валидация файлов (тип, размер)
+app/Http/Services/ImageService.php         — запись в S3, постраничный список файлов
+resources/views/components/file-upload.blade.php — форма загрузки
+resources/views/components/file-list.blade.php   — список файлов с пагинацией
+resources/js/file-upload.js                — drag&drop, отправка на /files/upload
+resources/js/get-files.js                  — загрузка и рендер /files (пагинация)
+```
